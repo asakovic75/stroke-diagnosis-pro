@@ -1,0 +1,16 @@
+gradio
+opencv-python
+torch
+torchvision
+numpy
+pandas
+fpdf2
+segmentation-models-pytorch
+albumentations
+pydicom
+pylibjpeg
+pylibjpeg-libjpeg
+pylibjpeg-openjpeg
+matplotlib
+seaborn
+huggingface_hub
