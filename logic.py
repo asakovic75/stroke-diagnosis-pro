@@ -7,10 +7,8 @@ import pydicom
 import matplotlib.pyplot as plt
 import io
 from PIL import Image
-from huggingface_hub import InferenceClient
 import pytz
 
-client = InferenceClient("meta-llama/Meta-Llama-3-8B-Instruct")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 DB_PATH = "stroke_history.csv"
@@ -81,9 +79,6 @@ DICOM_DESC = {
     "RescaleType": "Тип шкалы преобразования"
 }
 
-current_clinical_context = ""
-current_batch_context = ""
-
 def load_database():
     if os.path.exists(DB_PATH):
         try:
@@ -116,31 +111,6 @@ def clean_num(val):
         return f"{float(s):.3f}".rstrip('0').rstrip('.')
     except:
         return str(val)
-
-def ask_ai_assistant(question, context_type, data_summary):
-    system_prompt = f"""
-Ты — дежурный нейрохирург. Твоя задача: дать четкую медицинскую консультацию.
-ДАННЫЕ АНАЛИЗА: {data_summary}
-ТВОИ ПРАВИЛА:
-1. Если на снимке Инсульт — ПЕРВЫМ ДЕЛОМ дай пошаговую инструкцию:
-   - Срочно вызвать скорую (103/112).
-   - Уложить пациента, приподняв голову на 30 градусов.
-   - Обеспечить свежий воздух, расстегнуть одежду.
-   - НИЧЕГО не давать пить, есть или из таблеток.
-2. Для массового потока: умей сравнивать файлы, находить самые тяжелые случаи по площади поражения.
-3. Расшифруй плотность HU: если выше 50 — это кровь (геморрагия), если ниже 30 — отек (ишемия).
-4. Пиши подробно и профессионально, не ленись.
-"""
-    
-    try:
-        response = client.chat_completion(
-            messages=[{"role": "user", "content": system_prompt + "\n\nВопрос пользователя: " + question}], 
-            max_tokens=1000, 
-            temperature=0.5
-        )
-        return response.choices[0].message.content
-    except:
-        return "Произошла ошибка связи с ИИ. Пожалуйста, попробуйте еще раз."
 
 def generate_report_universal(results_list, output_name="Diagnosis_Report.pdf", is_batch=False):
     pdf = FPDF()
@@ -240,9 +210,12 @@ def create_analytics(df):
         n, bins, patches = axes[1].hist(areas, bins=10, edgecolor='black')
         for i in range(len(patches)):
             bin_center = (bins[i] + bins[i+1]) / 2
-            if bin_center < 0.5: patches[i].set_facecolor('#FFEB3B')
-            elif bin_center < 2.0: patches[i].set_facecolor('#FB8C00')
-            else: patches[i].set_facecolor('#D32F2F')
+            if bin_center < 0.5:
+                patches[i].set_facecolor('#FFEB3B')
+            elif bin_center < 2.0:
+                patches[i].set_facecolor('#FB8C00')
+            else:
+                patches[i].set_facecolor('#D32F2F')
         axes[1].set_xlabel("Площадь поражения (%)")
     else: 
         axes[1].text(0.5, 0.5, 'Данных нет', ha='center')
@@ -275,7 +248,7 @@ def core_inference(img):
     return img_res, mask, prob
 
 def predict_stroke(file_path, model_key):
-    global history_list, current_clinical_context
+    global history_list
     if not file_path or not load_selected_model(model_key): return [None]*6
     
     filename = os.path.basename(file_path)
@@ -315,8 +288,6 @@ def predict_stroke(file_path, model_key):
         'verdict_ru': status_ru, 'speed': speed_ms, 
         'date': now_gr.strftime("%d.%m"), 'time': now_gr.strftime("%H:%M:%S")
     }
-
-    current_clinical_context = f"Снимок {filename}. Статус: {status_ru}. Плотность очага: {hu_info}. Локализация: {side_ru}. Площадь: {area}. Скорость: {speed_ms} мс."
     
     meta = {}
     if is_dicom:
@@ -352,7 +323,7 @@ def predict_stroke(file_path, model_key):
                 <div style="font-size: 1.2em; font-weight: bold;">{speed_ms} мс</div>
             </div>
             <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px;">
-                <div style="font-size: 0.9em;">🎯 Уверенность ИИ</div>
+                <div style="font-size: 0.9em;">🎯 Уверенность</div>
                 <div style="font-size: 1.2em; font-weight: bold;">{confidence}</div>
             </div>
             <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px;">
@@ -371,13 +342,11 @@ def predict_stroke(file_path, model_key):
     return res_view, img_res, stats_html, d_html, pd.DataFrame(history_list, columns=COLUMNS), pdf_p
     
 def process_batch(files, model_key):
-    global current_batch_context
     if not files or not load_selected_model(model_key): 
         return [None] * 6
     
     batch_results = []
     report_items = []
-    full_data_ai = ""
     speed_log = []
     total_start_time = time.time()
     
@@ -445,8 +414,6 @@ def process_batch(files, model_key):
             f"{file_duration} мс",
             area_v
         ])
-        
-        full_data_ai += f"Файл {info['filename']}: {info['verdict_ru']}, Тип {hu}, Локализация {side}, Площадь {area_str}. "
     
     total_duration = round((time.time() - total_start_time) * 1000, 1)
     avg_speed = round(np.mean(speed_log), 1) if speed_log else 0
@@ -459,8 +426,6 @@ def process_batch(files, model_key):
     df.to_csv(DB_DICOM_PATH, index=False)
     
     pdf_p = generate_report_universal(report_items, "Batch_Diagnosis_Report.pdf", is_batch=True)
-    
-    current_batch_context = f"Массовый поток из {len(batch_results)} файлов. Средняя скорость: {avg_speed} мс/файл. Макс. скорость: {max_speed} мс, мин: {min_speed} мс. Данные: {full_data_ai}"
     
     df_ana = pd.DataFrame(batch_results, columns=df_columns)
     df_ana['Площадь_Ч'] = df_ana['Площадь_Ч'].astype(float)
