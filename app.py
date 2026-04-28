@@ -6,27 +6,27 @@ css = """
 .gradio-container { max-width: 1100px !important; margin: 0 auto !important; }
 #header { text-align: center !important; }
 footer { display: none !important; }
-.compact-df { margin-top: -10px !important; }
+.compact-df { margin-top: 10px !important; }
 """
 
-with gr.Blocks(fill_width=True, css=css) as demo:
+with gr.Blocks(fill_width=True) as demo:
     gr.Markdown("<div id='header'><h1>🧠 Диагностика инсульта по КТ</h1><h3>Интеллектуальная система анализа медицинских изображений</h3></div>")
     
     with gr.Tabs():
         with gr.Tab("🏥 Клинический режим"):
             with gr.Column():
                 model_selector = gr.Dropdown(choices=list(logic.model_paths.keys()), value=list(logic.model_paths.keys())[0], label="🔧 ВЫБЕРИТЕ НЕЙРОСЕТЕВУЮ МОДЕЛЬ")
-                input_f = gr.Image(label="📸 ЗАГРУЗИТЕ СНИМОК КТ", type="filepath")
+                input_f = gr.File(label="📸 ЗАГРУЗИТЕ СНИМОК КТ", file_types=[".png", ".jpg", ".jpeg", ".dcm"])
                 with gr.Row():
                     btn = gr.Button("🔍 ЗАПУСТИТЬ АНАЛИЗ", variant="primary", size="lg")
                     clr = gr.ClearButton(value="🗑 ОЧИСТИТЬ ЭКРАН", size="lg")
                 status_out, details_out = gr.HTML(), gr.HTML()
                 with gr.Row():
-                    o_res, o_orig = gr.Image(label="🎯 Результат сегментации"), gr.Image(label="📷 Исходный снимок")
+                    o_res = gr.Image(label="🎯 Результат сегментации", height=300, width=300)
+                    o_orig = gr.Image(label="📷 Исходный снимок", height=300, width=300)
                 pdf_file = gr.File(label="📄 МЕДИЦИНСКИЙ ОТЧЕТ (PDF)")
                 
-                gr.HTML("<br>")
-                history_table = gr.Dataframe(value=pd.DataFrame(logic.history_list, columns=logic.COLUMNS), interactive=False, elem_classes="compact-df")
+                history_table = gr.Dataframe(value=pd.DataFrame(logic.history_list, columns=logic.COLUMNS), interactive=True, elem_classes="compact-df")
                 with gr.Row():
                     save_csv_btn = gr.Button("💾 СОХРАНИТЬ (CSV)", variant="primary", size="lg")
                     download_csv_btn = gr.DownloadButton("📥 СКАЧАТЬ (CSV)", size="lg")
@@ -37,7 +37,7 @@ with gr.Blocks(fill_width=True, css=css) as demo:
         with gr.Tab("🚀 Массовый поток"):
             with gr.Column():
                 bm_sel = gr.Dropdown(choices=list(logic.model_paths.keys()), value=list(logic.model_paths.keys())[0], label="🔧 ВЫБЕРИТЕ НЕЙРОСЕТЕВУЮ МОДЕЛЬ")
-                binp = gr.File(label="📸 ЗАГРУЗИТЕ ПАКЕТ DICOM ФАЙЛОВ", file_count="multiple")
+                binp = gr.File(label="📸 ЗАГРУЗИТЕ ФАЙЛЫ (PNG, JPG, DICOM)", file_count="multiple", file_types=[".png", ".jpg", ".jpeg", ".dcm"])
                 with gr.Row():
                     bbtn = gr.Button("🔍 ЗАПУСТИТЬ АНАЛИЗ", variant="primary", size="lg")
                     bclr = gr.ClearButton(value="🗑 ОЧИСТИТЬ ЭКРАН", size="lg")
@@ -46,16 +46,21 @@ with gr.Blocks(fill_width=True, css=css) as demo:
                 bres = gr.Image(show_label=False)
                 b_pdf_file = gr.File(label="📄 МЕДИЦИНСКИЙ ОТЧЕТ ПО ПАКЕТУ (PDF)")
                 
-                gr.HTML("<br>") 
-                bhist = gr.Dataframe(interactive=False, elem_classes="compact-df")
-                bdl_b = gr.DownloadButton("📥 СКАЧАТЬ (CSV)", size="lg")
+                bhist = gr.Dataframe(interactive=True, elem_classes="compact-df")
+                state_full_df = gr.State()
+                with gr.Row():
+                    btn_priority = gr.Button("🎯 ПРИОРИТЕТ", variant="secondary", size="lg")
+                    btn_reset = gr.Button("↺ СБРОС", variant="secondary", size="lg")
+                    bdl_b = gr.DownloadButton("📥 СКАЧАТЬ CSV", size="lg")
                     
-            bbtn.click(logic.process_batch, [binp, bm_sel], [bres, bst_out, bdet_out, bhist, b_pdf_file])
+            bbtn.click(logic.process_batch, [binp, bm_sel], [bres, bst_out, bdet_out, bhist, b_pdf_file, state_full_df])
             bclr.add([binp, bres, bst_out, bdet_out, bhist, b_pdf_file])
+            btn_priority.click(lambda df: df[df['Вердикт'] == 'Инсульт'] if isinstance(df, pd.DataFrame) and not df.empty else df, [state_full_df], [bhist])
+            btn_reset.click(lambda df: df, [state_full_df], [bhist])
+            bdl_b.click(lambda: logic.DB_DICOM_PATH, None, bdl_b)
 
     save_csv_btn.click(lambda: gr.Info("Сохранено!"), None, None)
     download_csv_btn.click(lambda: logic.DB_PATH, None, download_csv_btn)
-    bdl_b.click(lambda: logic.DB_DICOM_PATH, None, bdl_b)
 
 if __name__ == "__main__":
-    demo.launch(ssr_mode=False, theme=gr.themes.Soft())
+    demo.launch(ssr_mode=False, theme=gr.themes.Soft(), css=css)
