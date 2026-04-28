@@ -55,7 +55,17 @@ with gr.Blocks(fill_width=True) as demo:
                     
             bbtn.click(logic.process_batch, [binp, bm_sel], [bres, bst_out, bdet_out, bhist, b_pdf_file, state_full_df])
             bclr.add([binp, bres, bst_out, bdet_out, bhist, b_pdf_file])
-            btn_priority.click(lambda df: df[df['Вердикт'] == 'Инсульт'] if isinstance(df, pd.DataFrame) and not df.empty else df, [state_full_df], [bhist])
+            
+            def priority_filter(df):
+                if not isinstance(df, pd.DataFrame) or df.empty:
+                    return pd.DataFrame()
+                if 'Инсульт' not in df['Вердикт'].values:
+                    return pd.DataFrame(columns=df.columns)
+                filtered = df[df['Вердикт'] == 'Инсульт'].copy()
+                filtered = filtered.sort_values(by='Площадь', key=lambda x: x.str.rstrip('%').astype(float), ascending=False)
+                return filtered
+            
+            btn_priority.click(priority_filter, [state_full_df], [bhist])
             btn_reset.click(lambda df: df, [state_full_df], [bhist])
             bdl_b.click(lambda: logic.DB_DICOM_PATH, None, bdl_b)
 
