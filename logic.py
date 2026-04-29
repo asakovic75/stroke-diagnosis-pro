@@ -18,18 +18,14 @@ COLUMNS = ["ID", "Снимок", "Дата", "Время", "Модель", "Ве
 
 MAX_HISTORY = 100
 
-def get_hu_analysis(image_orig, mask_256, ds=None):
+def get_hu_analysis(image_orig, mask_256, ds):
     try:
         mask_orig = cv2.resize(mask_256, (image_orig.shape[1], image_orig.shape[0]), interpolation=cv2.INTER_NEAREST)
-        if ds is not None:
-            raw_pixels = ds.pixel_array.astype(float)
-            slope = getattr(ds, 'RescaleSlope', 1)
-            intercept = getattr(ds, 'RescaleIntercept', 0)
-            hu_data = raw_pixels * slope + intercept
-            stroke_pixels = hu_data[mask_orig > 0]
-        else:
-            gray = cv2.cvtColor(image_orig, cv2.COLOR_RGB2GRAY)
-            stroke_pixels = (gray[mask_orig > 0].astype(float) / 255.0) * 80 + 0
+        raw_pixels = ds.pixel_array.astype(float)
+        slope = getattr(ds, 'RescaleSlope', 1)
+        intercept = getattr(ds, 'RescaleIntercept', 0)
+        hu_data = raw_pixels * slope + intercept
+        stroke_pixels = hu_data[mask_orig > 0]
         if len(stroke_pixels) > 0:
             avg_val = np.mean(stroke_pixels)
             label = "Кровь/Геморрагия" if avg_val > 50 else "Ишемия/Отек"
@@ -254,17 +250,15 @@ def predict_stroke(file_path, model_key):
         file_path = file_path[0] if file_path else None
     if not file_path or not os.path.exists(file_path):
         return [None]*6
+    
     filename = os.path.basename(file_path)
-    is_dicom = filename.lower().endswith('.dcm')
-    ds = None
     try:
-        if is_dicom:
-            ds = pydicom.dcmread(file_path)
-            input_img = dicom_to_rgb(ds)
-        else:
-            input_img = cv2.cvtColor(cv2.imread(file_path), cv2.COLOR_BGR2RGB)
+        ds = pydicom.dcmread(file_path)
+        input_img = dicom_to_rgb(ds)
     except Exception as e:
-        print(f"Ошибка чтения файла: {e}")
+        print(f"Ошибка чтения DICOM файла: {e}")
+        import gradio as gr
+        gr.Warning("Ошибка чтения DICOM файла")
         return [None]*6
     
     input_img_resized = cv2.resize(input_img, (256, 256))
@@ -308,9 +302,8 @@ def predict_stroke(file_path, model_key):
         'date': now_gr.strftime("%d.%m"), 'time': now_gr.strftime("%H:%M:%S")
     }
     meta = {}
-    if is_dicom and ds is not None:
-        for tag in IMPORTANT_DICOM_TAGS:
-            meta[tag] = clean_num(getattr(ds, tag, "Н/Д"))
+    for tag in IMPORTANT_DICOM_TAGS:
+        meta[tag] = clean_num(getattr(ds, tag, "Н/Д"))
     
     pdf_p = generate_report_universal([{'orig_img': img_res, 'res_img': res_view, 'info': info, 'meta': meta}], is_batch=False)
     
@@ -374,17 +367,12 @@ def process_batch(files, model_key):
     for i, f in enumerate(files):
         file_start_time = time.time()
         filename = os.path.basename(f.name)
-        is_dicom = filename.lower().endswith('.dcm')
-        ds = None
         try:
-            if is_dicom:
-                ds = pydicom.dcmread(f.name)
-                img = dicom_to_rgb(ds)
-            else:
-                img = cv2.cvtColor(cv2.imread(f.name), cv2.COLOR_BGR2RGB)
+            ds = pydicom.dcmread(f.name)
+            img = dicom_to_rgb(ds)
             img_256 = cv2.resize(img, (256, 256))
         except Exception as e:
-            print(f"Ошибка чтения {filename}: {e}")
+            print(f"Ошибка чтения DICOM {filename}: {e}")
             continue
         
         img_res, mask, prob = core_inference(img_256)
@@ -419,9 +407,8 @@ def process_batch(files, model_key):
         
         now = datetime.now(pytz.timezone('Europe/Minsk'))
         meta = {}
-        if is_dicom and ds is not None:
-            for tag in IMPORTANT_DICOM_TAGS:
-                meta[tag] = clean_num(getattr(ds, tag, "Н/Д"))
+        for tag in IMPORTANT_DICOM_TAGS:
+            meta[tag] = clean_num(getattr(ds, tag, "Н/Д"))
         
         info = {
             'p_id': f"B-{i+1}", 
@@ -455,7 +442,7 @@ def process_batch(files, model_key):
     
     if not batch_results:
         import gradio as gr
-        gr.Warning("Не удалось обработать ни одного файла")
+        gr.Warning("Не удалось обработать ни одного DICOM файла")
         return [None] * 6
     
     total_duration = round((time.time() - total_start_time) * 1000, 1)
