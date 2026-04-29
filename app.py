@@ -16,7 +16,7 @@ with gr.Blocks(fill_width=True) as demo:
         with gr.Tab("🏥 Клинический режим"):
             with gr.Column():
                 model_selector = gr.Dropdown(choices=list(logic.model_paths.keys()), value=list(logic.model_paths.keys())[0], label="🔧 ВЫБЕРИТЕ НЕЙРОСЕТЕВУЮ МОДЕЛЬ")
-                input_f = gr.File(label="📸 ЗАГРУЗИТЕ СНИМОК КТ", file_types=[".png", ".jpg", ".jpeg", ".dcm"])
+                input_f = gr.File(label="📸 ЗАГРУЗИТЕ DICOM ФАЙЛ", file_types=[".dcm"])
                 with gr.Row():
                     btn = gr.Button("🔍 ЗАПУСТИТЬ АНАЛИЗ", variant="primary", size="lg")
                     clr = gr.ClearButton(value="🗑 ОЧИСТИТЬ ЭКРАН", size="lg")
@@ -37,7 +37,7 @@ with gr.Blocks(fill_width=True) as demo:
         with gr.Tab("🚀 Массовый поток"):
             with gr.Column():
                 bm_sel = gr.Dropdown(choices=list(logic.model_paths.keys()), value=list(logic.model_paths.keys())[0], label="🔧 ВЫБЕРИТЕ НЕЙРОСЕТЕВУЮ МОДЕЛЬ")
-                binp = gr.File(label="📸 ЗАГРУЗИТЕ ФАЙЛЫ (PNG, JPG, DICOM)", file_count="multiple", file_types=[".png", ".jpg", ".jpeg", ".dcm"])
+                binp = gr.File(label="📸 ЗАГРУЗИТЕ ПАКЕТ DICOM ФАЙЛОВ", file_count="multiple", file_types=[".dcm"])
                 with gr.Row():
                     bbtn = gr.Button("🔍 ЗАПУСТИТЬ АНАЛИЗ", variant="primary", size="lg")
                     bclr = gr.ClearButton(value="🗑 ОЧИСТИТЬ ЭКРАН", size="lg")
