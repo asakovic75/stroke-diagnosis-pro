@@ -1,31 +1,20 @@
-Структура папок
-Серийный номер тома: D893-C1C4
 C:.
-¦   .gitattributes
-¦   app.py
-¦   DejaVuSans.ttf
-¦   DICOM.ipynb
-¦   packages.txt
-¦   README.md
-¦   requirements.txt
-¦   STROKE_AI_MODEL.ipynb
-¦   tree.txt
-¦   
-+---assets
-+---data
-¦       stroke_history.csv
-¦       stroke_history_dicom.csv
-¦       
-+---models
-¦       stroke_model.pth
-¦       stroke_model_best.pth
-¦       
-L---src
-        config.py
-        database.py
-        diagnosis.py
-        dicom_preprocessing.py
-        main_logic.py
-        report.py
-        segmentation.py
-        
+в”‚   .gitattributes
+в”‚   app.py
+в”‚   config.py
+в”‚   database.py
+в”‚   DejaVuSans.ttf
+в”‚   diagnosis.py
+в”‚   dicom_preprocessing.py
+в”‚   main_logic.py
+в”‚   packages.txt
+в”‚   README.md
+в”‚   report.py
+в”‚   requirements.txt
+в”‚   segmentation.py
+в”‚   STROKE_AI_MODEL.ipynb
+в”‚   stroke_history.csv
+в”‚   stroke_history_dicom.csv
+в”‚   stroke_model.pth
+в”‚   stroke_model_best.pth
+в”‚   tree.txt
