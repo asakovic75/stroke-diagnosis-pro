@@ -9,4 +9,49 @@ app_file: app.py
 pinned: false
 ---
 
+<<<<<<< HEAD
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+=======
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Демо-Hugging%20Face-yellow)](https://huggingface.co/spaces/asakovic75/stroke-diagnosis-pro)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+[![DICOM](https://img.shields.io/badge/Data-DICOM-blueviolet)](https://pydicom.github.io/)
+
+## 📋 О проекте
+Специализированная медицинская система для высокоточной диагностики ишемического инсульта. В отличие от базовой версии, данный комплекс ориентирован на профессиональную работу с медицинским стандартом **DICOM** и потоковую обработку данных.
+
+### ✨ Ключевые возможности:
+*   **🏥 Клинический режим.** Анализ единичных КТ-снимков с точной локализацией (полушарие) и сегментацией.
+*   **🚀 Массовый поток (Batch).** Загрузка целых папок DICOM-файлов. Автоматическая обработка серии снимков за один клик.
+*   **📊 Аналитика и статистика.** Построение графиков тяжести патологий и распределения инсультов по результатам массовой обработки.
+*   **📄 Профессиональные отчеты.** Генерация PDF-протоколов, содержащих не только результаты ИИ, но и метаданные из DICOM (толщина среза, параметры окна и др.).
+
+## 🛠 Технологии
+*   **Ядро.** PyTorch, U-Net (EfficientNet-B4).
+*   **Медицинские данные.** `pydicom` (чтение и парсинг метаданных).
+*   **Интерфейс.** Gradio (реализована многовкладочная структура).
+*   **Визуализация.** Matplotlib (гистограммы тяжести и диаграммы статистики).
+
+## 📁 Структура файлов
+*   `app.py` — веб-интерфейс Gradio.
+*   `config.py` — константы и настройки.
+*   `database.py` — работа с SQLite (сохранение истории).
+*   `dicom_preprocessing.py` — чтение DICOM и извлечение метаданных.
+*   `diagnosis.py` — анализ плотности HU, артериальные бассейны.
+*   `segmentation.py` — нейросеть U‑Net + EfficientNet.
+*   `report.py` — генерация PDF-отчётов и графиков.
+*   `main_logic.py` — клинический и пакетный режимы.
+*   `stroke_history.db` — база данных клинических анализов (SQLite).
+*   `stroke_model.pth` — веса обученной модели.
+
+## 🚀 Как запустить
+
+### Онлайн-демо:
+👉 **[Открыть Stroke Diagnosis Pro](https://huggingface.co/spaces/asakovic75/stroke-diagnosis-pro)**
+
+### Локально:
+```bash
+git clone https://github.com/asakovic75/stroke-diagnosis-pro.git
+cd stroke-diagnosis-pro
+pip install -r requirements.txt
+python app.py
+>>>>>>> 8f27171a47e231bf802e490aa440c60bde4a57ee
