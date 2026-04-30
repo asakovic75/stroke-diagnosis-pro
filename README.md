@@ -1,13 +1,4 @@
----
-title: Stroke Diagnosis
-emoji: 🚀
-colorFrom: red
-colorTo: gray
-sdk: gradio
-sdk_version: 6.11.0
-app_file: app.py
-pinned: false
----
+# 🧠 Диагностика инсульта по КТ
 
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Демо-Hugging%20Face-yellow)](https://huggingface.co/spaces/asakovic75/stroke-diagnosis-pro)
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
@@ -29,6 +20,7 @@ pinned: false
 *   **Визуализация.** Matplotlib (гистограммы тяжести и диаграммы статистики).
 
 ## 📁 Структура файлов
+*   `STROKE_AI_MODEL.ipnb` — обучение модели
 *   `app.py` — веб-интерфейс Gradio.
 *   `config.py` — константы и настройки.
 *   `database.py` — работа с SQLite (сохранение истории).
