@@ -43,6 +43,6 @@ git clone https://github.com/asakovic75/stroke-diagnosis-pro.git
 cd stroke-diagnosis-pro
 pip install -r requirements.txt
 python app.py
-
+```
 
 > *Обратите внимание: все файлы расположены в корневой папке репозитория (плоская структура), без дополнительных подпапок. Файл tree.txt содержит визуализацию этой структуры.*
