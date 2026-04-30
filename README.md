@@ -9,9 +9,6 @@ app_file: app.py
 pinned: false
 ---
 
-<<<<<<< HEAD
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
-=======
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Демо-Hugging%20Face-yellow)](https://huggingface.co/spaces/asakovic75/stroke-diagnosis-pro)
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![DICOM](https://img.shields.io/badge/Data-DICOM-blueviolet)](https://pydicom.github.io/)
@@ -54,4 +51,3 @@ git clone https://github.com/asakovic75/stroke-diagnosis-pro.git
 cd stroke-diagnosis-pro
 pip install -r requirements.txt
 python app.py
->>>>>>> 8f27171a47e231bf802e490aa440c60bde4a57ee
